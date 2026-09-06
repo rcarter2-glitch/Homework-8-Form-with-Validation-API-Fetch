@@ -1,11 +1,10 @@
-
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Reaper Lounge College Football Wait List</title>
+  <title>The Reaper Lounge Wait List</title>
 
   <style>
     body {
@@ -34,6 +33,240 @@
       margin-bottom: 25px;
     }
 
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #777;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 3px solid #b3d7ff;
+    }
+
+    .error {
+      color: #b00020;
+      margin-top: 5px;
+      min-height: 20px;
+    }
+
+    .success {
+      color: #176b2c;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #api-result {
+      margin-top: 25px;
+      padding: 15px;
+      border-radius: 5px;
+      background: #eee;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+    <h1>☠️ The Reaper Lounge Wait List</h1>
+
+    <p class="subtitle">
+      Join the wait list and we'll let you know when your table is ready.
+    </p>
+
+    <form id="waitlistForm" novalidate>
+
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          aria-describedby="nameError"
+        >
+        <div id="nameError" class="error" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          aria-describedby="emailError"
+        >
+        <div id="emailError" class="error" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="partySize">Party Size</label>
+        <input
+          type="text"
+          id="partySize"
+          name="partySize"
+          placeholder="Example: 4"
+          required
+          aria-describedby="partySizeError"
+        >
+        <div id="partySizeError" class="error" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="message">Special Requests</label>
+        <textarea
+          id="message"
+          name="message"
+          placeholder="Any special requests?"
+          required
+          aria-describedby="messageError"
+        ></textarea>
+        <div id="messageError" class="error" aria-live="polite"></div>
+      </div>
+
+      <button type="submit">Join the Wait List</button>
+
+      <div id="formSuccess" class="success" aria-live="polite"></div>
+    </form>
+
+    <div id="api-result" aria-live="polite">
+      Loading a fun quote...
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById("waitlistForm");
+
+    const fields = {
+      name: document.getElementById("name"),
+      email: document.getElementById("email"),
+      partySize: document.getElementById("partySize"),
+      message: document.getElementById("message")
+    };
+
+    // Clear errors when the user starts correcting a field
+    Object.values(fields).forEach((field) => {
+      field.addEventListener("input", () => {
+        const error = document.getElementById(`${field.id}Error`);
+
+        error.textContent = "";
+        field.removeAttribute("aria-invalid");
+
+        document.getElementById("formSuccess").textContent = "";
+      });
+    });
+
+    // Form validation
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      let isValid = true;
+
+      // Check for empty required fields
+      Object.values(fields).forEach((field) => {
+        const error = document.getElementById(`${field.id}Error`);
+
+        if (field.value.trim() === "") {
+          error.textContent =
+            `${field.labels[0].textContent} is required.`;
+
+          field.setAttribute("aria-invalid", "true");
+          isValid = false;
+        }
+      });
+
+      // Email format validation
+      const email = fields.email.value.trim();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (email !== "" && !emailPattern.test(email)) {
+        document.getElementById("emailError").textContent =
+          "Please enter a valid email address containing @.";
+
+        fields.email.setAttribute("aria-invalid", "true");
+        isValid = false;
+      }
+
+      // Party size validation
+      const partySize = Number(fields.partySize.value);
+
+      if (
+        fields.partySize.value.trim() !== "" &&
+        (!Number.isInteger(partySize) || partySize < 1)
+      ) {
+        document.getElementById("partySizeError").textContent =
+          "Please enter a valid party size of 1 or more.";
+
+        fields.partySize.setAttribute("aria-invalid", "true");
+        isValid = false;
+      }
+
+      if (isValid) {
+        document.getElementById("formSuccess").textContent =
+          `You're on the list, ${fields.name.value.trim()}! ` +
+          `We'll be ready for your party of ${partySize}.`;
+
+        form.reset();
+      }
+    });
+
+    // BONUS: Fetch a random quote from a public API
+    fetch("https://api.quotable.io/random")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("API request failed.");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        document.getElementById("api-result").innerHTML =
+          `<strong>While You Wait:</strong><br>
+           "${data.content}" — ${data.author}`;
+      })
+      .catch((error) => {
+        document.getElementById("api-result").textContent =
+          "Our quote service is currently unavailable.";
+
+        console.error(error);
+      });
+  </script>
+
+</body>
+</html>
+```
     .form-group {
       margin-bottom: 18px;
     }
