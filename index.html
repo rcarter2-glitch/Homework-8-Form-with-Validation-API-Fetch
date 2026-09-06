@@ -1,1 +1,262 @@
 
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Football Fan Form</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #777;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 3px solid #b3d7ff;
+    }
+
+    .error {
+      color: #b00020;
+      margin-top: 5px;
+      min-height: 20px;
+    }
+
+    .success {
+      color: #176b2c;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #api-result {
+      margin-top: 25px;
+      padding: 15px;
+      border-radius: 5px;
+      background: #eee;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+    <h1>🏈 College Football Fan Zone</h1>
+    <p class="subtitle">
+      Tell us about your college football fandom!
+    </p>
+
+    <form id="footballForm" novalidate>
+
+      <!-- Name -->
+      <div class="form-group">
+        <label for="name">Fan Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          aria-describedby="nameError"
+        >
+        <div id="nameError" class="error" aria-live="polite"></div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          aria-describedby="emailError"
+        >
+        <div id="emailError" class="error" aria-live="polite"></div>
+      </div>
+
+      <!-- Favorite Team -->
+      <div class="form-group">
+        <label for="team">Favorite College Football Team</label>
+        <input
+          type="text"
+          id="team"
+          name="team"
+          placeholder="Example: Texas Longhorns"
+          required
+          aria-describedby="teamError"
+        >
+        <div id="teamError" class="error" aria-live="polite"></div>
+      </div>
+
+      <!-- Message -->
+      <div class="form-group">
+        <label for="message">Game-Day Message</label>
+        <textarea
+          id="message"
+          name="message"
+          placeholder="Tell us why you love college football!"
+          required
+          aria-describedby="messageError"
+        ></textarea>
+        <div id="messageError" class="error" aria-live="polite"></div>
+      </div>
+
+      <button type="submit">Join the Fan Zone 🏈</button>
+
+      <div id="formSuccess" class="success" aria-live="polite"></div>
+    </form>
+
+    <!-- Bonus API -->
+    <div id="api-result" aria-live="polite">
+      Loading a football-related fact...
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById("footballForm");
+
+    const fields = {
+      name: document.getElementById("name"),
+      email: document.getElementById("email"),
+      team: document.getElementById("team"),
+      message: document.getElementById("message")
+    };
+
+    // Clear errors when the user starts correcting a field
+    Object.values(fields).forEach((field) => {
+      field.addEventListener("input", () => {
+        const error = document.getElementById(`${field.id}Error`);
+
+        error.textContent = "";
+        field.removeAttribute("aria-invalid");
+
+        document.getElementById("formSuccess").textContent = "";
+      });
+    });
+
+    // Form validation
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      let isValid = true;
+
+      // Check for empty required fields
+      Object.values(fields).forEach((field) => {
+        const error = document.getElementById(`${field.id}Error`);
+
+        if (field.value.trim() === "") {
+          error.textContent =
+            `${field.labels[0].textContent} is required.`;
+
+          field.setAttribute("aria-invalid", "true");
+          isValid = false;
+        }
+      });
+
+      // Email format validation
+      const email = fields.email.value.trim();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (email !== "" && !emailPattern.test(email)) {
+        document.getElementById("emailError").textContent =
+          "Please enter a valid email address containing @.";
+
+        fields.email.setAttribute("aria-invalid", "true");
+        isValid = false;
+      }
+
+      // Success message
+      if (isValid) {
+        document.getElementById("formSuccess").textContent =
+          `Touchdown! Thanks ${fields.name.value.trim()}! ` +
+          `Your ${fields.team.value.trim()} fan profile was submitted.`;
+
+        form.reset();
+      }
+    });
+
+    // BONUS:
+    // Fetch a random quote from a free public API
+    fetch("https://api.quotable.io/random")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("API request failed.");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        document.getElementById("api-result").innerHTML =
+          `<strong>Pregame Motivation:</strong><br>
+           "${data.content}" — ${data.author}`;
+      })
+      .catch((error) => {
+        document.getElementById("api-result").textContent =
+          "Pregame motivation is currently unavailable.";
+
+        console.error(error);
+      });
+  </script>
+
+</body>
+</html>
+```
